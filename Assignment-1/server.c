@@ -1,4 +1,3 @@
-
 // Server side C/C++ program to demonstrate Socket programming
 #include <unistd.h>
 #include <stdio.h>
@@ -7,6 +6,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <pwd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #define PORT 8080
 
 int main(int argc, char const *argv[])
@@ -31,8 +32,7 @@ int main(int argc, char const *argv[])
     }
 
     // Forcefully attaching socket to the port 8080
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                                                  &opt, sizeof(opt)))
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -42,27 +42,25 @@ int main(int argc, char const *argv[])
     address.sin_port = htons( PORT );
 
     // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr *)&address,
-                                 sizeof(address))<0)
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0)
     {
-        perror("bind failed");
+        perror("Bind Failed");
         exit(EXIT_FAILURE);
     }
     if (listen(server_fd, 3) < 0)
     {
-        perror("listen");
+        perror("Listen");
         exit(EXIT_FAILURE);
     }
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                       (socklen_t*)&addrlen))<0)
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,(socklen_t*)&addrlen))<0)
     {
-        perror("accept");
+        perror("Accept");
         exit(EXIT_FAILURE);
     }    
     pid = fork();
     if (pid == 0) {
         if ((pwd = getpwnam(user)) == NULL) {
-            perror("Cannot find UID for nobody");
+            perror("No UID found for the user nobody");
         }
         setuid(pwd->pw_uid);
         valread = read(new_socket , buffer, 1024);
@@ -71,6 +69,6 @@ int main(int argc, char const *argv[])
         printf("Hello message sent\n");
         exit(0);
     }
-    wait();
+    wait(NULL);
     return 0;
 }
